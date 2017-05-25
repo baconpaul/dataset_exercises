@@ -27,18 +27,20 @@ def generate_set(nschools):
         attendance[sc] = r.uniform(0.7, 0.95)
 
     # ToDo: I should put in holiday math here better.
-    s = date(2015, 9, 3)
+    s = date(2015, 9, 2)
     t = timedelta(days=1)
     days = []
     while(len(days) < 180):
         if(s.weekday() < 5):
-            days.append(s)
+            days.append((s, s.weekday()))
         s = s + t
 
     with open("datasets/lunch_{}.csv".format(nschools), 'w', newline='') as csvfile:
         cw = csv.writer(csvfile, quoting=csv.QUOTE_MINIMAL)
-        cw.writerow(["Date", "School", "Enrollment", "Attendance", "Hamburger", "Pizza", "HotDog", "Skipped"])
-        for d in days:
+        cw.writerow(["Date", "DayOfWeek", "School", "Enrollment",
+                     "Attendance", "Hamburger", "Pizza", "HotDog", "Skipped"])
+        dayNames = ["01-Mon", "02-Tue", "03-Wed", "04-Thu", "05-Fri"]
+        for d, wd in days:
             for s in schools:
                 e = enrollment[s]
                 p = int(e * r.uniform(attendance[s], 1.0))
@@ -46,12 +48,19 @@ def generate_set(nschools):
                 pzp = r.uniform(0, min(1 - hmp, 0.5))
                 hdp = r.uniform(0, 1 - hmp - pzp)
 
+                if(s == schools[1] and wd == 3):
+                    # Pizza Thursday!
+                    pzp += 0.8 * hmp + 0.75 * hdp
+                    hmp = 0.2 * hmp
+                    hdp = 0.25 * pzp
+
                 hm = (int)(hmp * p)
                 pz = (int)(pzp * p)
                 hd = (int)(hdp * p)
+
                 sk = p - hm - pz - hd
 
-                cw.writerow([d, s, e, p, hm, pz, hd, sk])
+                cw.writerow([d, dayNames[wd], s, e, p, hm, pz, hd, sk])
 
     return True
 
